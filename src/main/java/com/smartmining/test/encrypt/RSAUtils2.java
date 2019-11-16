@@ -30,25 +30,29 @@ public class RSAUtils2 {
     private static RSAPrivateKey privateKeyCache;
 
     private static int blockSize=10;
-    private static BlockingQueue<Cipher> cipherPrivateKeyCahe = new LinkedBlockingQueue<Cipher>(blockSize);
-    private static BlockingQueue<Cipher> cipherPublicKeyCahe = new LinkedBlockingQueue<Cipher>(blockSize);
+    // private static BlockingQueue<Cipher> cipherPrivateKeyCahe = new LinkedBlockingQueue<Cipher>(blockSize);
+    // private static BlockingQueue<Cipher> cipherPublicKeyCahe = new LinkedBlockingQueue<Cipher>(blockSize);
 
-    // private static Cipher cipherPrivateKeyCahe;
-    // private static Cipher cipherPublicKeyCahe;
+    private static Cipher cipherPrivateKeyCahe;
+    private static Cipher cipherPublicKeyCahe;
 
     static {
         try {
             publicKeyCache = (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey)));
-            for (int i = 0; i < blockSize; i++) {
-                Cipher cipherPrivate = Cipher.getInstance("RSA");
-                cipherPrivate.init(Cipher.ENCRYPT_MODE, publicKeyCache);
-                cipherPrivateKeyCahe.put(cipherPrivate);
-            }
+            cipherPublicKeyCahe    = Cipher.getInstance("RSA");
+            cipherPublicKeyCahe.init(Cipher.ENCRYPT_MODE, publicKeyCache);
+            // for (int i = 0; i < blockSize; i++) {
+            //     Cipher cipherPrivate = Cipher.getInstance("RSA");
+            //     cipherPrivate.init(Cipher.ENCRYPT_MODE, publicKeyCache);
+            //     cipherPrivateKeyCahe.put(cipherPrivate);
+            // }
             privateKeyCache = (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKey)));
-            for (int i = 0; i < blockSize; i++) {
-                Cipher cipherPrivate = Cipher.getInstance("RSA");
-                cipherPrivate.init(Cipher.DECRYPT_MODE, privateKeyCache);
-            }
+            cipherPrivateKeyCahe= Cipher.getInstance("RSA");
+            // cipherPrivateKeyCahe.init(Cipher.DECRYPT_MODE, privateKeyCache);
+            // for (int i = 0; i < blockSize; i++) {
+            //     Cipher cipherPrivate = Cipher.getInstance("RSA");
+            //     cipherPrivate.init(Cipher.DECRYPT_MODE, privateKeyCache);
+            // }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -109,10 +113,10 @@ public class RSAUtils2 {
         //base64编码的公钥
         String outStr = null;
         try {
-            Cipher cipher = cipherPublicKeyCahe.take();
-            cipher.init(Cipher.ENCRYPT_MODE, publicKeyCache);
-            outStr = Base64.getEncoder().encodeToString((cipher.doFinal(str.getBytes(StandardCharsets.UTF_8))));
-            cipherPrivateKeyCahe.put(cipher);
+            // Cipher cipher = cipherPublicKeyCahe.take();
+            // cipherPublicKeyCahe.init(Cipher.ENCRYPT_MODE, publicKeyCache);
+            outStr = Base64.getEncoder().encodeToString((cipherPublicKeyCahe.doFinal(str.getBytes(StandardCharsets.UTF_8))));
+            // cipherPrivateKeyCahe.put(cipher);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -152,12 +156,19 @@ public class RSAUtils2 {
         byte[] inputByte = Base64.getDecoder().decode(str.getBytes(StandardCharsets.UTF_8));
         String outStr = null;
         try {
-            Cipher cipher = cipherPrivateKeyCahe.take();
-            cipher.init(Cipher.DECRYPT_MODE, privateKeyCache);
-            outStr = new String(cipher.doFinal(inputByte));
-            cipherPrivateKeyCahe.put(cipher);
+            // Cipher cipher = cipherPrivateKeyCahe.take();
+            cipherPrivateKeyCahe.init(Cipher.DECRYPT_MODE, privateKeyCache);
+            outStr = new String(cipherPrivateKeyCahe.doFinal(inputByte));
+            // cipherPrivateKeyCahe.put(cipher);
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
+            System.out.println("---------------------------------------------------------------------");
+            try {
+                cipherPrivateKeyCahe.init(Cipher.DECRYPT_MODE, privateKeyCache);
+                outStr = new String(cipherPrivateKeyCahe.doFinal(inputByte));
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
         }
         return outStr;
     }
@@ -233,11 +244,11 @@ public class RSAUtils2 {
         long start = System.currentTimeMillis();
         //明文
 //        String ming = "hadoop@123";
-        String ming = "420684198702154579!hadoop123420684198702154579";
-        // 加密后的密文
-        String mi = encrypt(ming, publicKey);
+//         String ming = "42068419870hadoophadoophadoophadoophadoophadoop";
+//         // 加密后的密文
+//         String mi = encrypt(ming, publicKey);
 
-        // String mi = "F5Ig3S4kpefa1K8BOwanSghvEaBFn4qGO32EF9/GYDHhG+gOz/wwi2z0tL3DKzLfTxtAg/KpuShUw/iL5Nh6NQ==";
+        String mi = "F5Ig3S4kpefa1K8BOwanSghvEaBFn4qGO32EF9/GYDHhG+gOz/wwi2z0tL3DKzLfTxtAg/KpuShUw/iL5Nh6NQ==";
         System.err.println("mi=" + mi);
         //解密后的明文
         String ming2 = decrypt(mi);
